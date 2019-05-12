@@ -1,0 +1,72 @@
+*** Basic ***
+Starting tiny on 11243
+Starting proxy on 29428
+1: home.html
+   Fetching ./tiny/home.html into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+   Fetching ./tiny/home.html into ./.noproxy directly from Tiny
+Error: Fetch timed out after 5 seconds
+   Comparing the two files
+   Failure: Files differ.
+2: csapp.c
+   Fetching ./tiny/csapp.c into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+   Fetching ./tiny/csapp.c into ./.noproxy directly from Tiny
+Error: Fetch timed out after 5 seconds
+   Comparing the two files
+   Failure: Files differ.
+3: tiny.c
+   Fetching ./tiny/tiny.c into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+   Fetching ./tiny/tiny.c into ./.noproxy directly from Tiny
+Error: Fetch timed out after 5 seconds
+   Comparing the two files
+   Failure: Files differ.
+4: godzilla.jpg
+   Fetching ./tiny/godzilla.jpg into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+   Fetching ./tiny/godzilla.jpg into ./.noproxy directly from Tiny
+Error: Fetch timed out after 5 seconds
+   Comparing the two files
+   Failure: Files differ.
+5: tiny
+   Fetching ./tiny/tiny into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+   Fetching ./tiny/tiny into ./.noproxy directly from Tiny
+Error: Fetch timed out after 5 seconds
+   Comparing the two files
+   Failure: Files differ.
+Killing tiny and proxy
+basicScore: 0/70
+
+*** Concurrency ***
+Starting tiny on port 5461
+Starting proxy on port 14844
+Starting the blocking NOP server on port 29529
+Trying to fetch a file from the blocking nop-server
+Fetching ./tiny/home.html into ./.noproxy directly from Tiny
+Fetching ./tiny/home.html into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+Error: Fetch timed out after 5 seconds
+Checking whether the proxy fetch succeeded
+Failure: Was not able to fetch tiny/home.html from the proxy.
+Killing tiny, proxy, and nop-server
+concurrencyScore: 0/30
+
+*** Cache ***
+Starting tiny on port 1129
+Starting proxy on port 12253
+Fetching ./tiny/tiny.c into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+Fetching ./tiny/home.html into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+Fetching ./tiny/csapp.c into ./.proxy using the proxy
+Error: Fetch timed out after 5 seconds
+Killing tiny
+Fetching a cached copy of ./tiny/home.html into ./.noproxy
+Failure: Was not able to fetch tiny/home.html from the proxy cache.
+Killing proxy
+cacheScore: 0/30
+
+totalScore: 0/130
+

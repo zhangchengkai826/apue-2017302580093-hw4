@@ -30,25 +30,14 @@ void clienterror(int fd, char *cause, char *errnum,
     Rio_writen(fd, body, strlen(body));
 }
 
-void read_requesthdrs(rio_t *rp) 
-{
-    char buf[MAXLINE];
-
-    Rio_readlineb(rp, buf, MAXLINE);
-    printf("%s", buf);
-    while(strcmp(buf, "\r\n")) {          
-	Rio_readlineb(rp, buf, MAXLINE);
-	printf("%s", buf);
-    }
-    return;
-}
-
 void doit(int fd) 
 {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
     char hostname[MAXLINE], port[MAXLINE];
     char *p, *q;
-    rio_t rio;
+    int clientfd;
+    rio_t rio, riocli;
+    int b_hostsent, b_useragentsent, b_connsent, b_proxyconnsent;
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -61,17 +50,19 @@ void doit(int fd)
                     "This proxy does not handle requests other than GET");
         return;
     }                                                  
-    read_requesthdrs(&rio);                             
 
+    /* Parse hostname & port from uri */
     p = strchr(uri, ':');
     p += 3;
     q = strchr(p, ':');
     if(q) {
       strncpy(hostname, p, q-p);
+      hostname[q-p] = '\0';
       q++;
       p = strchr(q, '/');
       if(p) {
         strncpy(port, q, p-q);
+        port[p-q] = '\0';
       } else {
         strcpy(port, "80");
       }
@@ -80,12 +71,83 @@ void doit(int fd)
       q = strchr(p, '/');
       if(q) {
         strncpy(hostname, p, q-p);
+        hostname[q-p] = '\0';
       } else {
         strcpy(hostname, p);
       }
     }
-    printf("%s\n%s\n", hostname, port);
-    /*clientfd = Open_clientfd(hostname, "80");*/
+
+    printf("[Debug] parsed hostname & port:\n\t%s\n\t%s\n", hostname, port);
+    clientfd = Open_clientfd(hostname, port);
+    printf("[Debug] clientfd:\n\t%d\n", clientfd);
+
+    sprintf(buf, "%s %s %s\r\n", "GET", uri, "HTTP/1.0");
+    Rio_writen(clientfd, buf, strlen(buf)); 
+
+    b_hostsent = 0;
+    b_useragentsent = 0;
+    b_connsent = 0;
+    b_proxyconnsent = 0;
+    /* Deal with headers */
+    while(1) {
+	char key[MAXLINE], val[MAXLINE];
+        char *p;
+
+        Rio_readlineb(&rio, buf, MAXLINE);
+        if(!strcmp(buf, "\r\n")) 
+            break;
+
+	/* Parse headers */
+        printf("[Debug] original header:\n\t%s", buf);
+        p = strchr(buf, ':');
+        strncpy(key, buf, p-buf);
+        key[p-buf] = '\0';
+        strcpy(val, p+2);
+        printf("[Debug] header:\n\tkey: %s\n\tval: %s", key, val);
+
+        if(!strcasecmp(key, "Host")) {
+            b_hostsent = 1;
+        } else if(!strcasecmp(key, "User-Agent")) {
+            b_useragentsent = 1;
+            strcpy(val, user_agent_hdr); 
+        } else if(!strcasecmp(key, "Connection")) {
+            b_connsent = 1;
+            strcpy(val, "close\r\n");
+        } else if(!strcasecmp(key, "Proxy-Connection")) {
+            b_proxyconnsent = 1;
+            strcpy(val, "close\r\n");
+        }
+        sprintf(buf, "%s: %s", key, val); /* Reconstruct header */
+        Rio_writen(clientfd, buf, strlen(buf)); /* Forward it */
+        printf("[Debug] forwarded header:\n\t%s", buf);
+    }
+    if(!b_hostsent) {
+        sprintf(buf, "%s: %s\r\n", "Host", hostname);
+        Rio_writen(clientfd, buf, strlen(buf)); 
+    }
+    if(!b_useragentsent) {
+        sprintf(buf, "%s: %s", "User-Agent", user_agent_hdr);
+        Rio_writen(clientfd, buf, strlen(buf)); 
+    }
+    if(!b_connsent) {
+        sprintf(buf, "%s: %s\r\n", "Connection", "close");
+        Rio_writen(clientfd, buf, strlen(buf)); 
+    }
+    if(!b_proxyconnsent) {
+        sprintf(buf, "%s: %s\r\n", "Proxy-Connetion", "close");
+        Rio_writen(clientfd, buf, strlen(buf)); 
+    }
+    strcpy(buf, "\r\n");
+    Rio_writen(clientfd, buf, strlen(buf)); /* End of header */
+
+    Rio_readinitb(&riocli, clientfd);
+    if(!Rio_readlineb(&riocli, buf, MAXLINE)) {
+      fprintf(stderr, "%s\n", "zero respond!");
+      Close(clientfd);
+      return;
+    }
+    printf("%s", buf);
+    Close(clientfd);
 }
 
 int main(int argc, char *argv[])
