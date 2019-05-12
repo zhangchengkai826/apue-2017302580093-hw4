@@ -46,6 +46,8 @@ void read_requesthdrs(rio_t *rp)
 void doit(int fd) 
 {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+    char hostname[MAXLINE], port[MAXLINE];
+    char *p, *q;
     rio_t rio;
 
     /* Read request line and headers */
@@ -60,6 +62,30 @@ void doit(int fd)
         return;
     }                                                  
     read_requesthdrs(&rio);                             
+
+    p = strchr(uri, ':');
+    p += 3;
+    q = strchr(p, ':');
+    if(q) {
+      strncpy(hostname, p, q-p);
+      q++;
+      p = strchr(q, '/');
+      if(p) {
+        strncpy(port, q, p-q);
+      } else {
+        strcpy(port, "80");
+      }
+    } else {
+      strcpy(port, "80");
+      q = strchr(p, '/');
+      if(q) {
+        strncpy(hostname, p, q-p);
+      } else {
+        strcpy(hostname, p);
+      }
+    }
+    printf("%s\n%s\n", hostname, port);
+    /*clientfd = Open_clientfd(hostname, "80");*/
 }
 
 int main(int argc, char *argv[])
