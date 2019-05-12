@@ -141,12 +141,15 @@ void doit(int fd)
     Rio_writen(clientfd, buf, strlen(buf)); /* End of header */
 
     Rio_readinitb(&riocli, clientfd);
-    if(!Rio_readlineb(&riocli, buf, MAXLINE)) {
-      fprintf(stderr, "%s\n", "zero respond!");
-      Close(clientfd);
-      return;
+    /* Deal with response headers */
+    while(1) {
+        Rio_readlineb(&riocli, buf, MAXLINE);
+        if(!strcmp(buf, "\r\n")) 
+            break;
+
+        printf("%s", buf);
+        Rio_writen(fd, buf, strlen(buf));
     }
-    printf("%s", buf);
     Close(clientfd);
 }
 
