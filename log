@@ -1,0 +1,143 @@
+Accepted connection from (localhost, 44678)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44680)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44682)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44684)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44686)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44688)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44690)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44692)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44694)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44696)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44698)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44700)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44702)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44704)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44706)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44708)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44710)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44712)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44714)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44716)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44718)
+CONNECT www.baidu.com:443 HTTP/1.1
+Accepted connection from (localhost, 44720)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44722)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44724)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44726)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44728)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44730)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44732)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44734)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44736)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+Accepted connection from (localhost, 44738)
+GET http://210.42.121.133/ HTTP/1.1
+Host: 210.42.121.133
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+
