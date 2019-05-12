@@ -4,6 +4,7 @@
 /* Recommended max cache and object sizes */
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
+#define DATA_BUF_SIZE 4096
 
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
@@ -38,6 +39,7 @@ void doit(int fd)
     int clientfd;
     rio_t rio, riocli;
     int b_hostsent, b_useragentsent, b_connsent, b_proxyconnsent;
+    unsigned char databuf[DATA_BUF_SIZE];
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -149,6 +151,18 @@ void doit(int fd)
 
         printf("%s", buf);
         Rio_writen(fd, buf, strlen(buf));
+    }
+    strcpy(buf, "\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+
+    /* Forward response content */
+    while(1) {
+        ssize_t n; 
+        memset(databuf, 0, sizeof(databuf));
+        if((n = Rio_readnb(&riocli, databuf, sizeof(databuf))) == 0)
+            break;
+
+        Rio_writen(fd, databuf, n);
     }
     Close(clientfd);
 }
