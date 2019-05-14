@@ -186,13 +186,23 @@ int main(int argc, char *argv[])
 
     listenfd = Open_listenfd(argv[1]);
     while (1) {
-	clientlen = sizeof(clientaddr);
+	pid_t pid;
+        clientlen = sizeof(clientaddr);
 	connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen); 
         Getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, 
                     port, MAXLINE, 0);
         printf("Accepted connection from (%s, %s)\n", hostname, port);
-	doit(connfd);                                            
-	Close(connfd);                                            
+
+        pid = fork();
+        if(pid == 0) {
+            /* child */
+            setsid(); /* detach child from parent */
+            doit(connfd);
+            Close(connfd);    
+        } else if(pid > 0) {
+            /* parent */
+            Close(connfd);
+        }        
     }
 
     return 0;
