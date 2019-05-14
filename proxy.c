@@ -9,6 +9,8 @@
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 
+static unsigned char *cache;
+
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg) 
 {
@@ -40,6 +42,9 @@ void doit(int fd)
     rio_t rio, riocli;
     int b_hostsent, b_useragentsent, b_connsent, b_proxyconnsent;
     unsigned char databuf[DATA_BUF_SIZE];
+    unsigned char *objCache;
+
+    objCache = malloc(MAX_OBJECT_SIZE);
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -169,6 +174,7 @@ void doit(int fd)
         Rio_writen(fd, databuf, n);
     }
     Close(clientfd);
+    free(objCache);
 }
 
 int main(int argc, char *argv[])
@@ -185,6 +191,7 @@ int main(int argc, char *argv[])
     }
 
     listenfd = Open_listenfd(argv[1]);
+    cache = mmap(NULL, MAX_CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     while (1) {
 	pid_t pid;
         clientlen = sizeof(clientaddr);
@@ -198,13 +205,12 @@ int main(int argc, char *argv[])
             /* child */
             setsid(); /* detach child from parent */
             doit(connfd);
-            Close(connfd);    
         } else if(pid > 0) {
             /* parent */
             Close(connfd);
         }        
     }
-
+    munmap(cache, MAX_CACHE_SIZE);
     return 0;
 }
 
