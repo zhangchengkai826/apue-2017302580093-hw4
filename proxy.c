@@ -7,7 +7,7 @@
 #define DATA_BUF_SIZE 4096
 
 /* You won't lose style points for including this long line in your code */
-static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
+static const char *user_agent_hdr = "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg) 
@@ -34,7 +34,7 @@ void clienterror(int fd, char *cause, char *errnum,
 void doit(int fd) 
 {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    char hostname[MAXLINE], port[MAXLINE];
+    char hostname[MAXLINE], port[MAXLINE], getpath[MAXLINE];
     char *p, *q;
     int clientfd;
     rio_t rio, riocli;
@@ -65,8 +65,10 @@ void doit(int fd)
       if(p) {
         strncpy(port, q, p-q);
         port[p-q] = '\0';
+        strcpy(getpath, p);
       } else {
         strcpy(port, "80");
+        strcpy(getpath, "/");
       }
     } else {
       strcpy(port, "80");
@@ -74,16 +76,18 @@ void doit(int fd)
       if(q) {
         strncpy(hostname, p, q-p);
         hostname[q-p] = '\0';
+        strcpy(getpath, q);
       } else {
         strcpy(hostname, p);
+        strcpy(getpath, "/");
       }
     }
 
-    printf("[Debug] parsed hostname & port:\n\t%s\n\t%s\n", hostname, port);
+    printf("[Debug] parsed hostname & port & getpath:\n\t%s\n\t%s\n\t%s\n", hostname, port, getpath);
     clientfd = Open_clientfd(hostname, port);
     printf("[Debug] clientfd:\n\t%d\n", clientfd);
 
-    sprintf(buf, "%s %s %s\r\n", "GET", uri, "HTTP/1.0");
+    sprintf(buf, "%s %s %s\r\n", "GET", getpath, "HTTP/1.0");
     Rio_writen(clientfd, buf, strlen(buf)); 
 
     b_hostsent = 0;
