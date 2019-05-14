@@ -5,11 +5,17 @@
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 #define DATA_BUF_SIZE 4096
+#define CACHE_REG_SIZE ((4 + MAXLINE) * 10)
+#define CACHE_USE_CNT(i) ((int)cacheReg[(4+MAXLINE)*i])
+#define SET_CACHE_USE_CNT(i, val) cacheReg[(4+MAXLINE)*i] = val
+#define CACHE_KEY(i) ((char *)cacheReg[(4+MAXLINE)*i+4])
+#define MAX_CACHED_OBJ 10
 
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 
 static unsigned char *cache;
+static unsigned char *cacheReg;
 
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg) 
@@ -193,6 +199,7 @@ int main(int argc, char *argv[])
     char hostname[MAXLINE], port[MAXLINE];
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
+    int i;
 
     /* Check command line args */
     if (argc != 2) {
@@ -202,6 +209,9 @@ int main(int argc, char *argv[])
 
     listenfd = Open_listenfd(argv[1]);
     cache = mmap(NULL, MAX_CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    for(i = 0; i < MAX_CACHED_OBJ; i++)
+        SET_CACHE_USE_CNT(i, -1);
     while (1) {
 	pid_t pid;
         clientlen = sizeof(clientaddr);
@@ -221,6 +231,7 @@ int main(int argc, char *argv[])
         }        
     }
     munmap(cache, MAX_CACHE_SIZE);
+    munmap(cacheReg, CACHE_REG_SIZE);
     return 0;
 }
 
