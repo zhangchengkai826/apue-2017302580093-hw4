@@ -6,9 +6,8 @@
 #define MAX_OBJECT_SIZE 102400
 #define DATA_BUF_SIZE 4096
 #define CACHE_REG_SIZE ((4 + MAXLINE) * 10)
-#define CACHE_USE_CNT(i) ((int)cacheReg[(4+MAXLINE)*i])
-#define SET_CACHE_USE_CNT(i, val) cacheReg[(4+MAXLINE)*i] = val
-#define CACHE_KEY(i) ((char *)cacheReg[(4+MAXLINE)*i+4])
+#define CACHE_USE_CNT(i) ((int *)((unsigned char *)cacheReg + (4+MAXLINE)*i))
+#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (4+MAXLINE)*i + 4))
 #define MAX_CACHED_OBJ 10
 
 /* You won't lose style points for including this long line in your code */
@@ -51,6 +50,7 @@ void doit(int fd)
     unsigned char *objCache;
     int cachedSize;
     int bCanCache;;
+    int i;
 
     objCache = malloc(MAX_OBJECT_SIZE);
     cachedSize = 0;
@@ -189,7 +189,17 @@ void doit(int fd)
         }
         Rio_writen(fd, databuf, n);
     }
+
     Close(clientfd);
+
+    for(i = 0; i < MAX_CACHED_OBJ; i++)
+        if(*CACHE_USE_CNT(i) == -1)
+            break;
+    if(i == MAX_CACHED_OBJ) {
+        /* LRU eviction */
+    } else {
+    
+    }
     free(objCache);
 }
 
@@ -211,7 +221,7 @@ int main(int argc, char *argv[])
     cache = mmap(NULL, MAX_CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     for(i = 0; i < MAX_CACHED_OBJ; i++)
-        SET_CACHE_USE_CNT(i, -1);
+        *CACHE_USE_CNT(i) = -1;
     while (1) {
 	pid_t pid;
         clientlen = sizeof(clientaddr);
