@@ -1,13 +1,15 @@
 #include <stdio.h>
+#include <pthread.h>
 #include "csapp.h"
 
 /* Recommended max cache and object sizes */
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 #define DATA_BUF_SIZE 4096
-#define CACHE_REG_SIZE ((4 + MAXLINE) * 10)
-#define CACHE_USE_CNT(i) ((int *)((unsigned char *)cacheReg + (4+MAXLINE)*i))
-#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (4+MAXLINE)*i + 4))
+#define CACHE_REG_SIZE ((8 + MAXLINE) * 10)
+#define CACHE_USE_CNT(i) ((int *)((unsigned char *)cacheReg + (8+MAXLINE)*i))
+#define CACHE_SIZE(i) ((int *)((unsigned char *)cacheReg + (8+MAXLINE)*i + 4))
+#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (8+MAXLINE)*i + 8))
 #define MAX_CACHED_OBJ 10
 
 /* You won't lose style points for including this long line in your code */
@@ -15,6 +17,7 @@ static const char *user_agent_hdr = "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) 
 
 static unsigned char *cache;
 static unsigned char *cacheReg;
+static pthread_mutex_t mutexCache[MAX_CACHED_OBJ];
 
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg) 
@@ -175,8 +178,8 @@ void doit(int fd)
     Rio_writen(fd, buf, strlen(buf));
 
     /* Forward response content */
+    ssize_t n; 
     while(1) {
-        ssize_t n; 
         memset(databuf, 0, sizeof(databuf));
         if((n = Rio_readnb(&riocli, databuf, sizeof(databuf))) == 0)
             break;
@@ -197,8 +200,13 @@ void doit(int fd)
             break;
     if(i == MAX_CACHED_OBJ) {
         /* LRU eviction */
+        pthread_mutex_lock(mutexCache + i);
+
+        pthread_mutex_unlock(mutexCache + i);
     } else {
-    
+      *CACHE_USE_CNT(i) = 0;
+      *CACHE_SIZE(i) = n;
+      memcpy(CACHE_KEY(i), objCache, n);
     }
     free(objCache);
 }
@@ -220,8 +228,10 @@ int main(int argc, char *argv[])
     listenfd = Open_listenfd(argv[1]);
     cache = mmap(NULL, MAX_CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    for(i = 0; i < MAX_CACHED_OBJ; i++)
+    for(i = 0; i < MAX_CACHED_OBJ; i++) {
         *CACHE_USE_CNT(i) = -1;
+        pthread_mutex_init(mutexCache + i, NULL);
+    }
     while (1) {
 	pid_t pid;
         clientlen = sizeof(clientaddr);
@@ -242,6 +252,8 @@ int main(int argc, char *argv[])
     }
     munmap(cache, MAX_CACHE_SIZE);
     munmap(cacheReg, CACHE_REG_SIZE);
+    for(i = 0; i < MAX_CACHED_OBJ; i++)
+        pthread_mutex_destroy(mutexCache + i);
     return 0;
 }
 
