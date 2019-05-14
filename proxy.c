@@ -43,8 +43,12 @@ void doit(int fd)
     int b_hostsent, b_useragentsent, b_connsent, b_proxyconnsent;
     unsigned char databuf[DATA_BUF_SIZE];
     unsigned char *objCache;
+    int cachedSize;
+    int bCanCache;;
 
     objCache = malloc(MAX_OBJECT_SIZE);
+    cachedSize = 0;
+    bCanCache = 1;
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -171,6 +175,12 @@ void doit(int fd)
         if((n = Rio_readnb(&riocli, databuf, sizeof(databuf))) == 0)
             break;
 
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
         Rio_writen(fd, databuf, n);
     }
     Close(clientfd);
