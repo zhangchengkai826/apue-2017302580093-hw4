@@ -229,7 +229,8 @@ void doit(int fd)
     pthread_rwlock_wrlock(lockCache + i);
     *CACHE_USE_CNT(i) = time(NULL);
     *CACHE_SIZE(i) = n;
-    memcpy(CACHE_KEY(i), objCache, n);
+    strcpy(*CACHE_KEY(i), uri);
+    memcpy(cache + i*MAX_OBJECT_SIZE, objCache, n);
     pthread_rwlock_unlock(lockCache + i);
     free(objCache);
 }
