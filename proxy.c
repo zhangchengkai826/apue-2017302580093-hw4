@@ -76,7 +76,7 @@ void doit(int fd)
 
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         pthread_rwlock_rdlock(lockCache + i);
-        if(!strcmp((char *)cacheReg[i*(MAXLINE+12)+12], uri)) {
+        if(!strcmp((char *)&cacheReg[i*(MAXLINE+12)+12], uri)) {
             pthread_rwlock_unlock(lockCache + i);
             pthread_rwlock_wrlock(lockCache + i);
             *CACHE_USE_CNT(i) = time(NULL);
