@@ -156,12 +156,6 @@ void doit(int fd)
     sprintf(buf, "%s %s %s\r\n", "GET", getpath, "HTTP/1.0");
     n = strlen(buf);
     Rio_writen(clientfd, buf, n); 
-    if(cachedSize + n > MAX_OBJECT_SIZE) 
-        bCanCache = 0;
-    if(bCanCache) {
-        memcpy(objCache + cachedSize, buf, n);
-        cachedSize += n;
-    }
 
     b_hostsent = 0;
     b_useragentsent = 0;
@@ -199,67 +193,31 @@ void doit(int fd)
         sprintf(buf, "%s: %s", key, val); /* Reconstruct header */
         n = strlen(buf);
         Rio_writen(clientfd, buf, n);
-        if(cachedSize + n > MAX_OBJECT_SIZE) 
-            bCanCache = 0;
-        if(bCanCache) {
-            memcpy(objCache + cachedSize, buf, n);
-            cachedSize += n;
-        }
         printf("[Debug] forwarded header:\n\t%s", buf);
     }
     if(!b_hostsent) {
         sprintf(buf, "%s: %s\r\n", "Host", hostname);
         n = strlen(buf);
         Rio_writen(clientfd, buf, n); 
-        if(cachedSize + n > MAX_OBJECT_SIZE) 
-            bCanCache = 0;
-        if(bCanCache) {
-            memcpy(objCache + cachedSize, buf, n);
-            cachedSize += n;
-        }
     }
     if(!b_useragentsent) {
         sprintf(buf, "%s: %s", "User-Agent", user_agent_hdr);
         n = strlen(buf);
         Rio_writen(clientfd, buf, n); 
-        if(cachedSize + n > MAX_OBJECT_SIZE) 
-            bCanCache = 0;
-        if(bCanCache) {
-            memcpy(objCache + cachedSize, buf, n);
-            cachedSize += n;
-        }
     }
     if(!b_connsent) {
         sprintf(buf, "%s: %s\r\n", "Connection", "close");
         n = strlen(buf);
         Rio_writen(clientfd, buf, n); 
-        if(cachedSize + n > MAX_OBJECT_SIZE) 
-            bCanCache = 0;
-        if(bCanCache) {
-            memcpy(objCache + cachedSize, buf, n);
-            cachedSize += n;
-        }
     }
     if(!b_proxyconnsent) {
         sprintf(buf, "%s: %s\r\n", "Proxy-Connetion", "close");
         n = strlen(buf);
         Rio_writen(clientfd, buf, n); 
-        if(cachedSize + n > MAX_OBJECT_SIZE) 
-            bCanCache = 0;
-        if(bCanCache) {
-            memcpy(objCache + cachedSize, buf, n);
-            cachedSize += n;
-        }
     }
     strcpy(buf, "\r\n");
     n = strlen(buf);
     Rio_writen(clientfd, buf, n); 
-    if(cachedSize + n > MAX_OBJECT_SIZE) 
-        bCanCache = 0;
-    if(bCanCache) {
-        memcpy(objCache + cachedSize, buf, n);
-        cachedSize += n;
-    }
 
     Rio_readinitb(&riocli, clientfd);
     /* Deal with response headers */
