@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 #include "csapp.h"
 
 /* Recommended max cache and object sizes */
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 #define DATA_BUF_SIZE 4096
-#define CACHE_REG_SIZE ((8 + MAXLINE) * 10)
-#define CACHE_USE_CNT(i) ((int *)((unsigned char *)cacheReg + (8+MAXLINE)*i))
-#define CACHE_SIZE(i) ((int *)((unsigned char *)cacheReg + (8+MAXLINE)*i + 4))
-#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (8+MAXLINE)*i + 8))
+#define CACHE_REG_SIZE ((12 + MAXLINE) * 10)
+#define CACHE_USE_CNT(i) ((long long *)((unsigned char *)cacheReg + (12+MAXLINE)*i))
+#define CACHE_SIZE(i) ((int *)((unsigned char *)cacheReg + (12+MAXLINE)*i + 8))
+#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (12+MAXLINE)*i + 12))
 #define MAX_CACHED_OBJ 10
 
 /* You won't lose style points for including this long line in your code */
@@ -196,7 +197,7 @@ void doit(int fd)
     Close(clientfd);
 
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
-        int useCnt;
+        long long useCnt;
         pthread_rwlock_rdlock(lockCache + i);
         useCnt = *CACHE_USE_CNT(i);
         pthread_rwlock_unlock(lockCache + i);
@@ -205,14 +206,15 @@ void doit(int fd)
     }
     if(i == MAX_CACHED_OBJ) {
         /* LRU eviction */
-        int lruCnt, lruIndex;
+        long long lruCnt;
+        int lruIndex;
         pthread_rwlock_rdlock(lockCache);
         lruCnt = *CACHE_USE_CNT(0);
         pthread_rwlock_unlock(lockCache);
         lruIndex = 0;
 
         for(i = 0; i < MAX_CACHED_OBJ; i++) {
-            int useCnt;
+            long long useCnt;
             pthread_rwlock_rdlock(lockCache + i);
             useCnt = *CACHE_USE_CNT(i);
             pthread_rwlock_unlock(lockCache + i);
@@ -225,7 +227,7 @@ void doit(int fd)
     }
     
     pthread_rwlock_wrlock(lockCache + i);
-    *CACHE_USE_CNT(i) = 0;
+    *CACHE_USE_CNT(i) = time(NULL);
     *CACHE_SIZE(i) = n;
     memcpy(CACHE_KEY(i), objCache, n);
     pthread_rwlock_unlock(lockCache + i);
