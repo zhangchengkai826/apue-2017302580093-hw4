@@ -76,7 +76,7 @@ void doit(int fd)
 
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         pthread_rwlock_rdlock(lockCache + i);
-        if(!strcmp(*CACHE_KEY(i), uri)) {
+        if(!strcmp((char *)cacheReg[i*(MAXLINE+12)+12], uri)) {
             pthread_rwlock_unlock(lockCache + i);
             pthread_rwlock_wrlock(lockCache + i);
             *CACHE_USE_CNT(i) = time(NULL);
@@ -108,7 +108,6 @@ void doit(int fd)
             if(bFinish)
                 break;
         }
-        Close(fd);
         free(objCache);
         return;
     }
@@ -318,9 +317,9 @@ void doit(int fd)
     
     pthread_rwlock_wrlock(lockCache + i);
     *CACHE_USE_CNT(i) = time(NULL);
-    *CACHE_SIZE(i) = n;
+    *CACHE_SIZE(i) = cachedSize;
     strcpy(*CACHE_KEY(i), uri);
-    memcpy(cache + i*MAX_OBJECT_SIZE, objCache, n);
+    memcpy(cache + i*MAX_OBJECT_SIZE, objCache, cachedSize);
     pthread_rwlock_unlock(lockCache + i);
     free(objCache);
 }
@@ -344,6 +343,7 @@ int main(int argc, char *argv[])
     cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         *CACHE_USE_CNT(i) = -1;
+        cacheReg[i*(MAXLINE+12)+12] = '\0';
         pthread_rwlock_init(lockCache + i, NULL);
     }
     while (1) {
