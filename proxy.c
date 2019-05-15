@@ -17,7 +17,7 @@ static const char *user_agent_hdr = "Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) 
 
 static unsigned char *cache;
 static unsigned char *cacheReg;
-static pthread_mutex_t mutexCache[MAX_CACHED_OBJ];
+static pthread_rwlock_t lockCache[MAX_CACHED_OBJ];
 
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg) 
@@ -195,19 +195,40 @@ void doit(int fd)
 
     Close(clientfd);
 
-    for(i = 0; i < MAX_CACHED_OBJ; i++)
-        if(*CACHE_USE_CNT(i) == -1)
+    for(i = 0; i < MAX_CACHED_OBJ; i++) {
+        int useCnt;
+        pthread_rwlock_rdlock(lockCache + i);
+        useCnt = *CACHE_USE_CNT(i);
+        pthread_rwlock_unlock(lockCache + i);
+        if(useCnt == -1)
             break;
+    }
     if(i == MAX_CACHED_OBJ) {
         /* LRU eviction */
-        pthread_mutex_lock(mutexCache + i);
+        int lruCnt, lruIndex;
+        pthread_rwlock_rdlock(lockCache);
+        lruCnt = *CACHE_USE_CNT(0);
+        pthread_rwlock_unlock(lockCache);
+        lruIndex = 0;
 
-        pthread_mutex_unlock(mutexCache + i);
-    } else {
-      *CACHE_USE_CNT(i) = 0;
-      *CACHE_SIZE(i) = n;
-      memcpy(CACHE_KEY(i), objCache, n);
+        for(i = 0; i < MAX_CACHED_OBJ; i++) {
+            int useCnt;
+            pthread_rwlock_rdlock(lockCache + i);
+            useCnt = *CACHE_USE_CNT(i);
+            pthread_rwlock_unlock(lockCache + i);
+            if(useCnt < lruCnt) {
+                lruCnt = useCnt;
+                lruIndex = i;
+            }
+        }
+        i = lruIndex;
     }
+    
+    pthread_rwlock_wrlock(lockCache + i);
+    *CACHE_USE_CNT(i) = 0;
+    *CACHE_SIZE(i) = n;
+    memcpy(CACHE_KEY(i), objCache, n);
+    pthread_rwlock_unlock(lockCache + i);
     free(objCache);
 }
 
@@ -230,7 +251,7 @@ int main(int argc, char *argv[])
     cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         *CACHE_USE_CNT(i) = -1;
-        pthread_mutex_init(mutexCache + i, NULL);
+        pthread_rwlock_init(lockCache + i, NULL);
     }
     while (1) {
 	pid_t pid;
@@ -253,7 +274,7 @@ int main(int argc, char *argv[])
     munmap(cache, MAX_CACHE_SIZE);
     munmap(cacheReg, CACHE_REG_SIZE);
     for(i = 0; i < MAX_CACHED_OBJ; i++)
-        pthread_mutex_destroy(mutexCache + i);
+        pthread_rwlock_destroy(lockCache + i);
     return 0;
 }
 
