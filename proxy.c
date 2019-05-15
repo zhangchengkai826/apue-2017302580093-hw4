@@ -55,10 +55,13 @@ void doit(int fd)
     int cachedSize;
     int bCanCache;;
     int i;
+    int bCached;
+    ssize_t n; 
 
     objCache = malloc(MAX_OBJECT_SIZE);
     cachedSize = 0;
     bCanCache = 1;
+    bCached = 0;
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -71,6 +74,41 @@ void doit(int fd)
                     "This proxy does not handle requests other than GET");
         return;
     }                                                  
+
+    for(i = 0; i < MAX_CACHED_OBJ; i++) {
+        pthread_rwlock_rdlock(lockCache + i);
+        if(!strcmp(*CACHE_KEY(i), uri)) {
+            *CACHE_USE_CNT(i) = time(NULL);
+            cachedSize = *CACHE_SIZE(i);
+            memcpy(objCache, cache + i*MAX_OBJECT_SIZE, cachedSize);
+            bCached = 1;
+        }          
+        pthread_rwlock_unlock(lockCache + i);
+        if(bCached)
+            break;
+    }
+    if(bCached) {
+        ssize_t nWritten, shouldWrite;
+        int bFinish;
+        nWritten = 0;
+        bFinish = 0;
+        while(1) {
+            memset(databuf, 0, sizeof(databuf));
+            shouldWrite = sizeof(databuf);
+            if(nWritten + shouldWrite > cachedSize) {
+                shouldWrite = cachedSize - nWritten;
+                bFinish = 1;
+            }
+            memcpy(databuf, objCache+nWritten, shouldWrite);
+            Rio_writen(fd, databuf, shouldWrite);
+            nWritten += shouldWrite;
+            if(bFinish)
+                break;
+        }
+        Close(fd);
+        free(objCache);
+        return;
+    }
 
     /* Parse hostname & port from uri */
     p = strchr(uri, ':');
@@ -107,7 +145,14 @@ void doit(int fd)
     printf("[Debug] clientfd:\n\t%d\n", clientfd);
 
     sprintf(buf, "%s %s %s\r\n", "GET", getpath, "HTTP/1.0");
-    Rio_writen(clientfd, buf, strlen(buf)); 
+    n = strlen(buf);
+    Rio_writen(clientfd, buf, n); 
+    if(cachedSize + n > MAX_OBJECT_SIZE) 
+        bCanCache = 0;
+    if(bCanCache) {
+        memcpy(objCache + cachedSize, databuf, n);
+        cachedSize += n;
+    }
 
     b_hostsent = 0;
     b_useragentsent = 0;
@@ -143,27 +188,69 @@ void doit(int fd)
             strcpy(val, "close\r\n");
         }
         sprintf(buf, "%s: %s", key, val); /* Reconstruct header */
-        Rio_writen(clientfd, buf, strlen(buf)); /* Forward it */
+        n = strlen(buf);
+        Rio_writen(clientfd, buf, n);
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
         printf("[Debug] forwarded header:\n\t%s", buf);
     }
     if(!b_hostsent) {
         sprintf(buf, "%s: %s\r\n", "Host", hostname);
-        Rio_writen(clientfd, buf, strlen(buf)); 
+        n = strlen(buf);
+        Rio_writen(clientfd, buf, n); 
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
     }
     if(!b_useragentsent) {
         sprintf(buf, "%s: %s", "User-Agent", user_agent_hdr);
-        Rio_writen(clientfd, buf, strlen(buf)); 
+        n = strlen(buf);
+        Rio_writen(clientfd, buf, n); 
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
     }
     if(!b_connsent) {
         sprintf(buf, "%s: %s\r\n", "Connection", "close");
-        Rio_writen(clientfd, buf, strlen(buf)); 
+        n = strlen(buf);
+        Rio_writen(clientfd, buf, n); 
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
     }
     if(!b_proxyconnsent) {
         sprintf(buf, "%s: %s\r\n", "Proxy-Connetion", "close");
-        Rio_writen(clientfd, buf, strlen(buf)); 
+        n = strlen(buf);
+        Rio_writen(clientfd, buf, n); 
+        if(cachedSize + n > MAX_OBJECT_SIZE) 
+            bCanCache = 0;
+        if(bCanCache) {
+            memcpy(objCache + cachedSize, databuf, n);
+            cachedSize += n;
+        }
     }
     strcpy(buf, "\r\n");
-    Rio_writen(clientfd, buf, strlen(buf)); /* End of header */
+    n = strlen(buf);
+    Rio_writen(clientfd, buf, n); 
+    if(cachedSize + n > MAX_OBJECT_SIZE) 
+        bCanCache = 0;
+    if(bCanCache) {
+        memcpy(objCache + cachedSize, databuf, n);
+        cachedSize += n;
+    }
 
     Rio_readinitb(&riocli, clientfd);
     /* Deal with response headers */
@@ -179,7 +266,6 @@ void doit(int fd)
     Rio_writen(fd, buf, strlen(buf));
 
     /* Forward response content */
-    ssize_t n; 
     while(1) {
         memset(databuf, 0, sizeof(databuf));
         if((n = Rio_readnb(&riocli, databuf, sizeof(databuf))) == 0)
@@ -269,6 +355,7 @@ int main(int argc, char *argv[])
             /* child */
             setsid(); /* detach child from parent */
             doit(connfd);
+            Close(connfd);
         } else if(pid > 0) {
             /* parent */
             Close(connfd);
