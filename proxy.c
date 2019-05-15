@@ -59,7 +59,6 @@ void doit(int fd)
     ssize_t n; 
 
     objCache = malloc(MAX_OBJECT_SIZE);
-    cachedSize = 0;
     bCanCache = 1;
     bCached = 0;
 
@@ -78,7 +77,11 @@ void doit(int fd)
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         pthread_rwlock_rdlock(lockCache + i);
         if(!strcmp(*CACHE_KEY(i), uri)) {
+            pthread_rwlock_unlock(lockCache + i);
+            pthread_rwlock_wrlock(lockCache + i);
             *CACHE_USE_CNT(i) = time(NULL);
+            pthread_rwlock_unlock(lockCache + i);
+            pthread_rwlock_rdlock(lockCache + i);
             cachedSize = *CACHE_SIZE(i);
             memcpy(objCache, cache + i*MAX_OBJECT_SIZE, cachedSize);
             bCached = 1;
@@ -109,6 +112,7 @@ void doit(int fd)
         free(objCache);
         return;
     }
+    cachedSize = 0;
 
     /* Parse hostname & port from uri */
     p = strchr(uri, ':');
