@@ -8,9 +8,6 @@
 #define MAX_OBJECT_SIZE 102400
 #define DATA_BUF_SIZE 4096
 #define CACHE_REG_SIZE ((12 + MAXLINE) * 10)
-#define CACHE_USE_CNT(i) ((long long *)((unsigned char *)cacheReg + (12+MAXLINE)*i))
-#define CACHE_SIZE(i) ((int *)((unsigned char *)cacheReg + (12+MAXLINE)*i + 8))
-#define CACHE_KEY(i) ((char **)((unsigned char *)cacheReg + (12+MAXLINE)*i + 12))
 #define MAX_CACHED_OBJ 10
 
 /* You won't lose style points for including this long line in your code */
@@ -76,15 +73,19 @@ void doit(int fd)
 
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         pthread_rwlock_rdlock(lockCache + i);
+        printf("[IMPORTANT]\n\turi: %s\n\tkey: %s\n", uri, (char *)&cacheReg[i*(MAXLINE+12)+12]);
         if(!strcmp((char *)&cacheReg[i*(MAXLINE+12)+12], uri)) {
+            printf("[GOTCHA]\n\tpos: %s\n", "1");
             pthread_rwlock_unlock(lockCache + i);
             pthread_rwlock_wrlock(lockCache + i);
-            *CACHE_USE_CNT(i) = time(NULL);
+            *((long long *)&cacheReg[i*(MAXLINE+12)]) = time(NULL);
             pthread_rwlock_unlock(lockCache + i);
             pthread_rwlock_rdlock(lockCache + i);
-            cachedSize = *CACHE_SIZE(i);
+            cachedSize = *((int *)&cacheReg[i*(MAXLINE+12)+8]);
+            printf("[IMPORTANT]\n\tcachedSize: %d\n", cachedSize);
             memcpy(objCache, cache + i*MAX_OBJECT_SIZE, cachedSize);
             bCached = 1;
+            printf("[GOTCHA]\n\tpos: %s\n", "2");
         }          
         pthread_rwlock_unlock(lockCache + i);
         if(bCached)
@@ -94,8 +95,10 @@ void doit(int fd)
         ssize_t nWritten, shouldWrite;
         int bFinish;
         nWritten = 0;
+        printf("[GOTCHA]\n\tpos: %s\n", "3");
         bFinish = 0;
         while(1) {
+            printf("[GOTCHA]\n\tpos: %s\n", "4");
             memset(databuf, 0, sizeof(databuf));
             shouldWrite = sizeof(databuf);
             if(nWritten + shouldWrite > cachedSize) {
@@ -104,9 +107,12 @@ void doit(int fd)
             }
             memcpy(databuf, objCache+nWritten, shouldWrite);
             Rio_writen(fd, databuf, shouldWrite);
+            printf("[IMPORTANT]\n\tcachedContent: %s\n", (char *)databuf);
             nWritten += shouldWrite;
+            printf("[GOTCHA]\n\tpos: %s\n", "5");
             if(bFinish)
                 break;
+            printf("[GOTCHA]\n\tpos: %s\n", "6");
         }
         free(objCache);
         return;
@@ -288,7 +294,7 @@ void doit(int fd)
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
         long long useCnt;
         pthread_rwlock_rdlock(lockCache + i);
-        useCnt = *CACHE_USE_CNT(i);
+        useCnt = *((long long *)&cacheReg[i*(MAXLINE+12)]);
         pthread_rwlock_unlock(lockCache + i);
         if(useCnt == -1)
             break;
@@ -298,14 +304,14 @@ void doit(int fd)
         long long lruCnt;
         int lruIndex;
         pthread_rwlock_rdlock(lockCache);
-        lruCnt = *CACHE_USE_CNT(0);
+        lruCnt = *((long long *)&cacheReg[0]);
         pthread_rwlock_unlock(lockCache);
         lruIndex = 0;
 
         for(i = 0; i < MAX_CACHED_OBJ; i++) {
             long long useCnt;
             pthread_rwlock_rdlock(lockCache + i);
-            useCnt = *CACHE_USE_CNT(i);
+            useCnt = *((long long *)&cacheReg[i*(MAXLINE+12)]);
             pthread_rwlock_unlock(lockCache + i);
             if(useCnt < lruCnt) {
                 lruCnt = useCnt;
@@ -316,9 +322,11 @@ void doit(int fd)
     }
     
     pthread_rwlock_wrlock(lockCache + i);
-    *CACHE_USE_CNT(i) = time(NULL);
-    *CACHE_SIZE(i) = cachedSize;
-    strcpy(*CACHE_KEY(i), uri);
+    *((long long *)&cacheReg[i*(MAXLINE+12)]) = time(NULL);
+    printf("[IMPORTANT]\n\tcachedSize original: %d\n", cachedSize);
+    *((int *)&cacheReg[i*(MAXLINE+12)+8]) = cachedSize;
+    printf("[IMPORTANT]\n\tcachedSize original boxed: %d\n", *((int *)&cacheReg[i*(MAXLINE+12)+8]));
+    strcpy((char *)&cacheReg[i*(MAXLINE+12)+12], uri);
     memcpy(cache + i*MAX_OBJECT_SIZE, objCache, cachedSize);
     pthread_rwlock_unlock(lockCache + i);
     free(objCache);
@@ -342,7 +350,7 @@ int main(int argc, char *argv[])
     cache = mmap(NULL, MAX_CACHE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     cacheReg = mmap(NULL, CACHE_REG_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     for(i = 0; i < MAX_CACHED_OBJ; i++) {
-        *CACHE_USE_CNT(i) = -1;
+        *((long long *)&cacheReg[i*(MAXLINE+12)]) = -1;
         cacheReg[i*(MAXLINE+12)+12] = '\0';
         pthread_rwlock_init(lockCache + i, NULL);
     }
@@ -360,6 +368,7 @@ int main(int argc, char *argv[])
             setsid(); /* detach child from parent */
             doit(connfd);
             Close(connfd);
+            return 0;
         } else if(pid > 0) {
             /* parent */
             Close(connfd);
