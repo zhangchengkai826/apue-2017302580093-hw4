@@ -150,7 +150,7 @@ void doit(int fd)
     if(cachedSize + n > MAX_OBJECT_SIZE) 
         bCanCache = 0;
     if(bCanCache) {
-        memcpy(objCache + cachedSize, databuf, n);
+        memcpy(objCache + cachedSize, buf, n);
         cachedSize += n;
     }
 
@@ -193,7 +193,7 @@ void doit(int fd)
         if(cachedSize + n > MAX_OBJECT_SIZE) 
             bCanCache = 0;
         if(bCanCache) {
-            memcpy(objCache + cachedSize, databuf, n);
+            memcpy(objCache + cachedSize, buf, n);
             cachedSize += n;
         }
         printf("[Debug] forwarded header:\n\t%s", buf);
@@ -205,7 +205,7 @@ void doit(int fd)
         if(cachedSize + n > MAX_OBJECT_SIZE) 
             bCanCache = 0;
         if(bCanCache) {
-            memcpy(objCache + cachedSize, databuf, n);
+            memcpy(objCache + cachedSize, buf, n);
             cachedSize += n;
         }
     }
@@ -216,7 +216,7 @@ void doit(int fd)
         if(cachedSize + n > MAX_OBJECT_SIZE) 
             bCanCache = 0;
         if(bCanCache) {
-            memcpy(objCache + cachedSize, databuf, n);
+            memcpy(objCache + cachedSize, buf, n);
             cachedSize += n;
         }
     }
@@ -227,7 +227,7 @@ void doit(int fd)
         if(cachedSize + n > MAX_OBJECT_SIZE) 
             bCanCache = 0;
         if(bCanCache) {
-            memcpy(objCache + cachedSize, databuf, n);
+            memcpy(objCache + cachedSize, buf, n);
             cachedSize += n;
         }
     }
@@ -238,7 +238,7 @@ void doit(int fd)
         if(cachedSize + n > MAX_OBJECT_SIZE) 
             bCanCache = 0;
         if(bCanCache) {
-            memcpy(objCache + cachedSize, databuf, n);
+            memcpy(objCache + cachedSize, buf, n);
             cachedSize += n;
         }
     }
@@ -248,7 +248,7 @@ void doit(int fd)
     if(cachedSize + n > MAX_OBJECT_SIZE) 
         bCanCache = 0;
     if(bCanCache) {
-        memcpy(objCache + cachedSize, databuf, n);
+        memcpy(objCache + cachedSize, buf, n);
         cachedSize += n;
     }
 
